@@ -8,9 +8,18 @@
 #include <algorithm>
 #include <sstream>
 
+#include <thread>
+
 #include "d3d9.h"
 #include "draw.h"
 #include "menu.h"
+#include "driver.h"
+#include "offsets.h"
+#include "vector2.h"
+#include "vector4.h"
+#include "w2s.h"
+//#include "aimbot.h"
+
 #include <imgui.h>
 #include "imgui_impl_dx9.h"
 #include "imgui_impl_win32.h"
@@ -31,6 +40,8 @@ HANDLE hnd;
 DWORD id;
 void entityloop();
 int render();
+
+Offsets* offsets = new Offsets();
 
 LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -56,6 +67,18 @@ LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 }
 WNDCLASSEXA OverlayWnd; // contains window class information
 
+auto Aimbot() -> void
+{
+	while (1)
+	{
+		// aimbot
+		//if (Options::b_aimbot_active)
+		//aimbot->start();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	AllocConsole();
@@ -64,6 +87,48 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	freopen("conout$", "w", stderr);
 	printf("Debugging Window:\n");
 
+	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+
+	if (Kernel::hKernelDriver == INVALID_HANDLE_VALUE)
+	{
+		std::cout << "Driver not loaded Exit in 2 Secs..." << std::endl;
+		Sleep(2000);
+		exit(0);
+	}
+
+	std::cout << "handleok: " << Kernel::hKernelDriver << std::endl;
+
+	while (hGameWnd == NULL)
+	{
+		hGameWnd = FindWindow(0, Kernel::WINDOWNAME);
+		Sleep(1000);
+	}
+	std::cout << "hwnd: " << hGameWnd << std::endl;
+
+	if (hGameWnd == NULL)
+	{
+		std::cout << "Window %s Not FOUND Exiting......" << std::endl;
+
+		Sleep(1000);
+		exit(0);
+	}
+
+	GetWindowThreadProcessId(hGameWnd, &Kernel::ProcessID);
+
+	if (Kernel::ProcessID == NULL)
+		exit(0);
+
+	std::cout << "processid: " << Kernel::ProcessID << std::endl;
+
+	info_t Input_Output_Data;
+	Input_Output_Data.pid = Kernel::ProcessID;
+	DWORD Readed_Bytes_Amount;
+
+	DeviceIoControl(Kernel::hKernelDriver, ctl_base, &Input_Output_Data, sizeof Input_Output_Data, &Input_Output_Data, sizeof Input_Output_Data, &Readed_Bytes_Amount, nullptr);
+	Kernel::GameModule = (QWORD)Input_Output_Data.data;
+
+	/*
+	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 
 	while (hGameWnd == NULL)
 	{
@@ -80,19 +145,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		exit(0);
 	}
 
-	//GetWindowThreadProcessId(hGameWnd, &Kernel::ProcessID);
+	GetWindowThreadProcessId(hGameWnd, &Kernel::ProcessID);
 
-	//if (Kernel::ProcessID == NULL)
-	//	exit(0);
+	if (Kernel::ProcessID == NULL)
+		exit(0);
 
-	//std::cout << "processid: " << Kernel::ProcessID << std::endl;
+	std::cout << "processid: " << Kernel::ProcessID << std::endl;
 
 
 	//DumpEXE(GameModule);
 
 	//std::cout << ("ProcessID: ") << Kernel::ProcessID << std::endl;
-	//std::cout << ("GameBase: 0x") << std::uppercase << std::hex << Kernel::GameModule << std::endl;
-	//std::cout << "GameBase: " << Kernel::GameModule << std::endl;
+	std::cout << ("GameBase: 0x") << std::uppercase << std::hex << Kernel::GameModule << std::endl;
+	std::cout << "GameBase: " << Kernel::GameModule << std::endl;
+	*/
+
+	std::cout << "GameBase: " << Kernel::GameModule << std::endl;
 
 
 	//WNDCLASSEXA OverlayWnd; // contains window class information
@@ -156,6 +224,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ImGui_ImplWin32_Init(hWnd);
 	D3D9Init(hWnd);
+
+	//std::thread thread_aimbot(Aimbot);
+	//thread_aimbot.detach();
+	//std::cout << "[THREAD] Aimbot started!" << std::endl;
 
 
 	for (;;)
@@ -291,7 +363,184 @@ void AimAtPos(float x, float y)
 
 void entityloop() {
 
+	//int player_count = offsets->get_player_count();
+	//process->read<int>(process->dw_module + p_game->player_count);
 
+	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
+
+	std::cout << "playercount " << player_count << "\n";
+
+	for (auto i = 1; i < player_count; i++) {
+
+		DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
+
+		if (!local_player)
+			continue;
+
+		//std::cout << "local_player " << local_player << "\n";
+
+		DWORD entity_list = Kernel::KeReadVirtualMemory<uintptr_t>(Kernel::GameModule + offsets->entity_list);
+
+		//std::cout << "entity_list " << entity_list << "\n";
+
+		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
+
+
+		if (!entity || entity == 14757395258967641292)
+			continue;
+
+		std::cout << "entity success " << entity << "\n";
+
+		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
+
+		std::cout << "is_dead " << is_dead << "\n";
+
+		if (is_dead)
+			continue;
+
+		int local_player_team = Kernel::KeReadVirtualMemory<int>(local_player + offsets->i_team);
+
+		std::cout << "local_player_team " << local_player_team << "\n";
+
+		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
+
+		std::cout << "entity_team " << entity_team << "\n";
+
+		if (local_player_team == entity_team)
+			continue;
+
+		Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
+		Vector3 foot = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_foot_pos);
+
+
+		head.z += 0.7f;
+
+		Vector2 w2s_head = get_entity_screen(head);
+		Vector2 w2s_foot = get_entity_screen(foot);
+
+		std::cout << "w2s_foot x " << w2s_foot.x << " " << w2s_foot.y <<"\n";
+
+		if (w2s_head == Vector2(-1, -1) || w2s_foot == Vector2(-1, -1))
+			continue;
+
+		//startcopypaste
+
+		if (entity_team == local_player_team) {
+
+			int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
+
+			std::cout << "health is " << health << "\n";
+
+			float Height = w2s_head.y - w2s_foot.y;
+			float delta = (Height / 100.0f) * health;
+
+			if (health > 75)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
+			else if (health > 50)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
+			else if (health > 25)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
+			else
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
+
+			float rMy = 0.392;
+			float gMy = 0.584;
+			float bMy = 0.930;
+			float aMy = 1;
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+
+			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_foot.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+
+			/*
+			char buffer[5];
+			char buffer2[4];
+			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
+			int ret = snprintf(buffer, sizeof buffer, "%f", Round(dist));
+			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
+			//printf("%d\n", dist);
+			char printChar1[2] = "[";
+			char printChar2[4] = "m] ";
+			char result[15];   // array to hold the result.
+
+			strcpy(result, printChar1); // copy string one into the result.
+			strcat(result, buffer); // append string two to the result.
+			strcat(result, printChar2); // append string two to the result.
+			strcat(result, buffer2); // append string two to the result.
+			DrawShadowString(result, entity_transformed.x, entity_transformed.y, 255, 255, 255, dx_FontCalibri);
+			*/
+			//write_glow_team(entity);
+		}
+		else {
+
+			int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
+
+			std::cout << "health is " << health << "\n";
+
+			float Height = w2s_head.y - w2s_foot.y;
+			float delta = (Height / 100.0f) * health;
+
+			if (health > 75)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
+			else if (health > 50)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
+			else if (health > 25)
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
+			else
+				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
+
+			float rEn = 1;
+			float gEn = 0;
+			float bEn = 0;
+			float aEn = 1;
+
+			//if (dist <= 200.f)
+			//	DrawLine(clientWidth / 2, clientHeight / 2, entity_transformed.x, entityhead_transformed.y, 57, 255, 20, 255);
+
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+
+			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+
+			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+
+			/*
+			char buffer[5];
+			char buffer2[4];
+			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
+			int ret = snprintf(buffer, sizeof buffer, "%f", Round(dist));
+			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
+			//printf("%d\n", dist);
+			char printChar1[2] = "[";
+			char printChar2[4] = "m] ";
+			char result[15];   // array to hold the result.
+
+			strcpy(result, printChar1); // copy string one into the result.
+			strcat(result, buffer); // append string two to the result.
+			strcat(result, printChar2); // append string two to the result.
+			strcat(result, buffer2); // append string two to the result.
+			DrawShadowString(result, entity_transformed.x, entity_transformed.y, 255, 255, 255, dx_FontCalibri);
+			*/
+	
+		}
+
+		//endcopypaste
+
+	}
 
 }
 
