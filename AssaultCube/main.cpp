@@ -126,8 +126,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//windowWidth = WindowRect.right - WindowRect.left;
 		//windowHeight = WindowRect.bottom - WindowRect.top;
 		//here make a change
-		windowWidth = (WindowRect.right - WindowRect.left) - 6;
-		windowHeight = (WindowRect.bottom - WindowRect.top) - 29;
+		windowWidth = (WindowRect.right - WindowRect.left);
+		windowHeight = (WindowRect.bottom - WindowRect.top);
+
+		DWORD dwStyle = GetWindowLong(TargetWnd, GWL_STYLE);
+
+		if (dwStyle & WS_BORDER) {
+			std::cout << "Bordered window need to remove pixels " << std::endl;
+			windowWidth -= 6;
+			windowHeight -= 29;
+		}
 		std::cout << "width: " << windowWidth << " " << "height: " << windowHeight << std::endl;
 		pMargin = { 0, 0, windowHeight, windowWidth };
 		hWnd = CreateWindowExA(WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED, lWindowName, lWindowName, WS_POPUP, 1, 1, windowWidth, windowHeight, 0, 0, 0, 0);
