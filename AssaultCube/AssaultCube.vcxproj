@@ -162,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aimbot.h" />
+    <ClInclude Include="color.h" />
     <ClInclude Include="d3d9.h" />
     <ClInclude Include="draw.h" />
     <ClInclude Include="driver.h" />

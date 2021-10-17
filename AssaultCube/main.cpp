@@ -18,6 +18,7 @@
 #include "vector2.h"
 #include "vector4.h"
 #include "w2s.h"
+#include "color.h"
 //#include "aimbot.h"
 
 #include <imgui.h>
@@ -661,7 +662,7 @@ int render() {
 
 	if (!show_menu) {
 		//	Circle((int)(clientWidth / 2), (int)(clientHeight / 2), fov, 0, full, true, 32, BLACK(255));
-		Circle((int)(clientWidth / 2), (int)(clientHeight / 2), fov, 0, full, true, 32, D3DCOLOR(255));
+		Circle((int)(clientWidth / 2), (int)(clientHeight / 2), fov, 0, full, true, 32, BLACK(255));
 		entityloop();
 		Sleep(1);
 	}
