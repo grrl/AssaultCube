@@ -45,9 +45,6 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="aimbot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="serialport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -89,9 +86,6 @@
     <ClInclude Include="vector3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="aimbot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -122,5 +116,10 @@
     <ClInclude Include="serialport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="arduino.ino">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -149,7 +149,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="aimbot.cpp" />
     <ClCompile Include="d3d9.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
@@ -162,7 +161,6 @@
     <ClCompile Include="serialport.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="aimbot.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="d3d9.h" />
     <ClInclude Include="draw.h" />
@@ -185,6 +183,9 @@
     <ClInclude Include="vector3.h" />
     <ClInclude Include="vector4.h" />
     <ClInclude Include="w2s.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="arduino.ino" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

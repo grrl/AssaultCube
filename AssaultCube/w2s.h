@@ -2,7 +2,7 @@
 #include "d3d9.h"
 #include "offsets.h"
 #include "structs.h"
-
+#include "vector4.h"
 ViewMatrix get_view_matrix()
 {
 	return Kernel::KeReadVirtualMemory<ViewMatrix>(Kernel::GameModule + offsets->view_matrix);
