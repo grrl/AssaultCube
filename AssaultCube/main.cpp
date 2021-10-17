@@ -52,6 +52,7 @@ DWORD id;
 void entityloop();
 int render();
 float fov = 45;
+bool aim;
 
 //arduino
 
@@ -514,7 +515,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 
 		if (GetAsyncKeyState(VK_END))
+		{ 
+			std::string movestring = "<" + std::to_string(666) + "," + std::to_string(666) + ">";
+
+			//Creating a c string
+			char *c_string = new char[movestring.size()];
+			//copying the std::string to c string
+			std::copy(movestring.begin(), movestring.end(), c_string);
+			//Adding the delimiter
+			//c_string[movestring.size()] = '\n';
+			//Writing string to arduino
+			arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+			//freeing c_string memory
+			delete[] c_string;
+
 			break;
+		}
 
 		if (PeekMessage(&Message, hWnd, 0, 0, PM_REMOVE))
 		{
@@ -808,6 +824,63 @@ void entityloop() {
 	arduino_aimbot(best_entity, w2s_head_target);
 
 
+}
+
+void menu() {
+
+	if (windowstate != 1) //You might need to remove this check and call it every time to get keyboard input working. Mouse input works anyway.
+	{
+		//RECT correct_window_rect;
+		//GetWindowRect(hWnd, &correct_window_rect);
+
+		//float my_width = correct_window_rect.right - correct_window_rect.left;
+		//float my_heigth = correct_window_rect.bottom - correct_window_rect.top;
+		//SetWindowPos(hWnd, hWnd, correct_window_rect.left - 20, correct_window_rect.top - 50, my_heigth, my_width, SWP_SHOWWINDOW);
+
+		ChangeClickability(true, hWnd);
+
+		std::string movestring = "<" + std::to_string(137) + "," + std::to_string(137) + ">";
+
+		//Creating a c string
+		char *c_string = new char[movestring.size()];
+		//copying the std::string to c string
+		std::copy(movestring.begin(), movestring.end(), c_string);
+		//Adding the delimiter
+		//c_string[movestring.size()] = '\n';
+		//Writing string to arduino
+		arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+		//freeing c_string memory
+		delete[] c_string;
+
+		//SendKey();
+	}
+
+
+	// convert now to tm struct for UTC
+	//tm *gmtm = gmtime(&now);
+	//dt = asctime(gmtm);
+	char stamp[256] = "Foreground 10 10  ";
+	DrawString(stamp, 10, 10, 255, 0, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
+
+
+	ImGui::SetNextWindowSize(ImVec2(200, 200));
+	//ImGui::SetNextWindowPos(ImVec2(200, 200));
+	/*
+	if (ImGui::Begin("dbd", nullptr,
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
+		/*ImGuiWindowFlags_AlwaysAutoResize |*/
+		//ImGuiWindowFlags_NoSavedSettings
+	//))
+	ImGui::Begin("Assault Cube");
+	{
+		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Aimb##aim", &aim);
+		ImGui::Checkbox("Aimb##aim", &aim);
+		ImGui::Checkbox("Aimb##aim", &aim);
+
+		ImGui::End();
+	}
 }
 
 int render() {

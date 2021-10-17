@@ -48,7 +48,7 @@ void MouseRptParser::Parse(USBHID *hid, bool is_rpt_id, uint8_t len, uint8_t *bu
   Serial.print("MouseRptParser::Parse");
   // Show USB HID mouse report
   for (uint8_t i = 0; i < len ; i++) {
-    Serial.print(' ');
+    Serial.print(' '); 
     Serial.print(buf[i], HEX);
   }
   Serial.println("END OF THE WALKWAY");
@@ -77,6 +77,8 @@ HIDBoot<USB_HID_PROTOCOL_MOUSE>    HidMouse(&Usb);
 
 MouseRptParser Prs;
 
+void(* resetFunc) (void) = 0;
+
 void setup()
 {
   Serial.begin( 115200 );
@@ -94,20 +96,6 @@ void setup()
   HidMouse.SetReportParser(0, &Prs);
 
   Mouse.begin();
-}
-
-void loop()
-{
-    recvWithStartEndMarkers();
-    if (newData == true) {
-        strcpy(tempChars, receivedChars);
-            // this temporary copy is necessary to protect the original data
-            //   because strtok() used in parseData() replaces the commas with \0
-        parseData();
-        showParsedData();
-        newData = false;
-    }
-  Usb.Task();
 }
 
 void recvWithStartEndMarkers() {
@@ -168,7 +156,30 @@ void showParsedData() {
     Serial.print(integerFromPC);
     Serial.print(", ");
     Serial.println(floatFromPC);
-    Mouse.move(integerFromPC, floatFromPC, 0);
+
+    if (integerFromPC == 666 && floatFromPC == 666){
+        resetFunc();
+    }
+    else if (integerFromPC == 137 && floatFromPC == 137){
+      Mouse.click();
+    }
+    else {
+      Mouse.move(integerFromPC, floatFromPC, 0);
+    }
     //Serial.print("Integer2 ");
     //Serial.println(floatFromPC);
+}
+
+void loop()
+{
+    recvWithStartEndMarkers();
+    if (newData == true) {
+        strcpy(tempChars, receivedChars);
+            // this temporary copy is necessary to protect the original data
+            //   because strtok() used in parseData() replaces the commas with \0
+        parseData();
+        showParsedData();
+        newData = false;
+    }
+  Usb.Task();
 }
