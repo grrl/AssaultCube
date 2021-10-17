@@ -40,6 +40,7 @@ HANDLE hnd;
 DWORD id;
 void entityloop();
 int render();
+float fov = 45;
 
 Offsets* offsets = new Offsets();
 
@@ -361,6 +362,79 @@ void AimAtPos(float x, float y)
 	mouse_event(0x0001, TargetX, TargetY, NULL, NULL);
 }
 
+void aimbot(DWORD entity, Vector2 v2_entity_screen) {
+
+	Vector3 center_screen;
+	center_screen.x = clientWidth / 2;
+	center_screen.y = clientHeight / 2;
+	Vector3 Aimpos;
+	Aimpos.x = v2_entity_screen.x;
+	Aimpos.y = v2_entity_screen.y;
+
+	float radiusx = (fov) * (center_screen.x / 100.0f);
+	float radiusy = (fov) * (center_screen.y / 100.0f);
+
+	//std::cout << "aimpos " << Aimpos.x << " " << Aimpos.y << "\n";
+	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy) {
+		std::cout << "working " << Aimpos.x << " " << Aimpos.y << "\n";
+		if (GetAsyncKeyState(VK_XBUTTON1) & 0x8000)
+			AimAtPos(Aimpos.x, Aimpos.y);
+
+	}
+
+}
+
+auto get_closest_target_to_crosshair(DWORD dw_local_player) -> DWORD
+{
+	DWORD best_entity = NULL;
+	float lowest_distance = FLT_MAX;
+
+	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
+
+	for (auto i = 1; i < player_count; i++)
+	{
+
+		DWORD entity_list = Kernel::KeReadVirtualMemory<uintptr_t>(Kernel::GameModule + offsets->entity_list);
+
+		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
+
+		if (!entity || entity == 14757395258967641292)
+			continue;
+
+		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
+
+		if (is_dead)
+			continue;
+
+		int local_player_team = Kernel::KeReadVirtualMemory<int>(dw_local_player + offsets->i_team);
+
+		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
+
+		if (local_player_team == entity_team)
+			continue;
+
+		Vector3 v3_entity_head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
+		Vector2 v2_entity_screen = get_entity_screen(v3_entity_head);
+
+		Vector3 center_screen;
+		center_screen.x = clientWidth / 2;
+		center_screen.y = clientHeight / 2;
+
+		float x = v2_entity_screen.x - clientWidth / 2;
+		float y = v2_entity_screen.y - clientHeight / 2;
+		float f_distance = (float)sqrt((x * x) + (y * y));
+
+		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
+
+		if (f_distance < lowest_distance)
+		{
+			lowest_distance = f_distance;
+			best_entity = entity;
+		}
+	}
+	return best_entity;
+}
+
 void entityloop() {
 
 	//int player_count = offsets->get_player_count();
@@ -370,9 +444,11 @@ void entityloop() {
 
 	std::cout << "playercount " << player_count << "\n";
 
-	for (auto i = 1; i < player_count; i++) {
+	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
 
-		DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
+	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
+
+	for (auto i = 1; i < player_count; i++) {
 
 		if (!local_player)
 			continue;
@@ -422,6 +498,11 @@ void entityloop() {
 
 		if (w2s_head == Vector2(-1, -1) || w2s_foot == Vector2(-1, -1))
 			continue;
+
+		if (entity == closest_entity) {
+
+			aimbot(entity, w2s_head);
+		}
 
 		//startcopypaste
 
@@ -544,8 +625,6 @@ void entityloop() {
 
 }
 
-
-
 int render() {
 
 	dx_Device->Clear(0, 0, D3DCLEAR_TARGET, 0, 1.0f, 0);
@@ -582,10 +661,10 @@ int render() {
 
 	if (!show_menu) {
 		//	Circle((int)(clientWidth / 2), (int)(clientHeight / 2), fov, 0, full, true, 32, BLACK(255));
+		Circle((int)(clientWidth / 2), (int)(clientHeight / 2), fov, 0, full, true, 32, D3DCOLOR(255));
 		entityloop();
 		Sleep(1);
 	}
-
 
 
 	if (show_menu)
