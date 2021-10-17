@@ -21,7 +21,7 @@
 #include "color.h"
 #include "serialport.h"
 
-//#include "aimbot.h"
+#include "aimbot.h"
 
 #include <imgui.h>
 #include "imgui_impl_dx9.h"
@@ -78,57 +78,6 @@ char *c_string;
 Offsets* offsets = new Offsets();
 
 
-auto get_closest_target_to_crosshair(DWORD dw_local_player) -> DWORD
-{
-	DWORD best_entity = NULL;
-	float lowest_distance = FLT_MAX;
-
-	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
-
-	for (auto i = 1; i < player_count; i++)
-	{
-
-		DWORD entity_list = Kernel::KeReadVirtualMemory<uintptr_t>(Kernel::GameModule + offsets->entity_list);
-
-		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
-
-		if (!entity || entity == 14757395258967641292)
-			continue;
-
-		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
-
-		if (is_dead)
-			continue;
-
-		int local_player_team = Kernel::KeReadVirtualMemory<int>(dw_local_player + offsets->i_team);
-
-		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
-
-		if (local_player_team == entity_team)
-			continue;
-
-		Vector3 v3_entity_head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
-		Vector2 v2_entity_screen = get_entity_screen(v3_entity_head);
-
-		Vector3 center_screen;
-		center_screen.x = clientWidth / 2;
-		center_screen.y = clientHeight / 2;
-
-		float x = v2_entity_screen.x - clientWidth / 2;
-		float y = v2_entity_screen.y - clientHeight / 2;
-		float f_distance = (float)sqrt((x * x) + (y * y));
-
-		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
-
-		if (f_distance < lowest_distance)
-		{
-			lowest_distance = f_distance;
-			best_entity = entity;
-		}
-	}
-	return best_entity;
-}
-
 LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, Message, wParam, lParam) && show_menu == true)
@@ -151,154 +100,7 @@ LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 }
-WNDCLASSEXA OverlayWnd; // contains window class information
 
-auto Aimbot() -> void
-{
-	while (1)
-	{
-		// aimbot
-		//if (Options::b_aimbot_active)
-		//aimbot->start();
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-	}
-}
-auto arduino_thread() -> void
-{
-	/*
-	char *c_string = new char[255];
-	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
-
-	std::cout << "data is " << c_string << std::endl;
-
-	delete[] c_string;
-	*/
-
-	char *c_string = new char[255];
-	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
-
-	if (c_string == "" || c_string == NULL)
-		return;
-
-	std::cout << "data is " << c_string << std::endl;
-
-	delete[] c_string;
-
-
-	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
-
-	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
-
-	Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(closest_entity + offsets->v3_head_pos);
-
-	head.z += 0.7f;
-
-	Vector2 v2_entity_screen = get_entity_screen(head);
-
-	Vector3 center_screen;
-	center_screen.x = clientWidth / 2;
-	center_screen.y = clientHeight / 2;
-	Vector3 Aimpos;
-	Aimpos.x = v2_entity_screen.x;
-	Aimpos.y = v2_entity_screen.y;
-
-	float radiusx = (fov) * (center_screen.x / 100.0f);
-	float radiusy = (fov) * (center_screen.y / 100.0f);
-
-	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy && GetAsyncKeyState(VK_INSERT) && 0x8000)
-	{
-		POINT p;
-		if (GetCursorPos(&p))
-		{
-			int currentx = p.x;
-			int currenty = p.y;
-
-			int ourpointx = 960;
-			int ourpointy = 540;
-
-			if (currentx == ourpointx && currenty == ourpointy)
-				return;
-
-			int moveamountx = 0;
-			int moveamounty = 0;
-			//cursor position now in p.x and p.y
-
-			if (ourpointx > currentx)
-			{
-				if (ourpointx - currentx > 127)
-				{
-					//Console.WriteLine("need -127");
-					moveamountx = 127;
-				}
-				else
-				{
-					//Console.WriteLine("need -x");
-					moveamountx = ourpointx - currentx;
-				}
-			}
-			else if (ourpointx < currentx)
-			{
-				if (currentx - ourpointx > 127)
-				{
-					moveamountx = -127;
-				}
-				else
-				{
-					moveamountx = -1 * (currentx - ourpointx);
-				}
-			}
-
-			if (ourpointy > currenty)
-			{
-				if (ourpointy - currenty > 127)
-				{
-					//Console.WriteLine("need -127 y");
-
-					moveamounty = 127;
-				}
-				else
-				{
-					//Console.WriteLine("need - y");
-
-					moveamounty = ourpointy - currenty;
-				}
-			}
-			else if (ourpointy < currenty)
-			{
-				if (currenty - ourpointy > 127)
-				{
-					moveamounty = -127;
-				}
-				else
-				{
-					moveamounty = -1 * (currenty - ourpointy);
-				}
-			}
-			std::string coords = "<"", 200>";
-			std::string movestring = "<" + std::to_string(moveamountx) + "," + std::to_string(moveamounty) + ">";
-
-			//Creating a c string
-			char *c_string = new char[movestring.size()];
-			//copying the std::string to c string
-			std::copy(movestring.begin(), movestring.end(), c_string);
-			//Adding the delimiter
-			//c_string[movestring.size()] = '\n';
-			//Writing string to arduino
-			arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
-			//freeing c_string memory
-			delete[] c_string;
-
-			Sleep(10);
-		}
-
-
-		// wrap in condition
-	}
-
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(5));
-}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -360,7 +162,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	std::cout << "GameBase: " << Kernel::GameModule << std::endl;
 
-	//WNDCLASSEXA OverlayWnd; // contains window class information
+	WNDCLASSEXA OverlayWnd; // contains window class information
 	OverlayWnd.cbSize = sizeof(WNDCLASSEXA); // size of struct, basically checking for version or check
 	OverlayWnd.style = CS_HREDRAW | CS_VREDRAW;  // Style, redraw method type
 	OverlayWnd.lpfnWndProc = Proc; // Pointer to the window procedure
