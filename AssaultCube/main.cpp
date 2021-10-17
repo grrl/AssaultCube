@@ -365,14 +365,6 @@ auto Aimbot() -> void
 
 		delete[] c_string;
 
-
-		if (GetAsyncKeyState(VK_END) && 0x8000) {
-
-
-			arduino.~SerialPort();
-			std::cout << "closed handle \n";
-			system("pause");
-		}
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	//Sleep(1);
 	}
@@ -528,6 +520,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
 			//freeing c_string memory
 			delete[] c_string;
+
+			Sleep(200);
 
 			break;
 		}
@@ -852,6 +846,7 @@ void menu() {
 		//freeing c_string memory
 		delete[] c_string;
 
+		Sleep(100);
 		//SendKey();
 	}
 
@@ -940,7 +935,7 @@ int render() {
 		menu();
 
 	}
-	else if (windowstate != 0)
+	else if (windowstate != 0 && !show_menu)
 	{
 		RECT correct_window_rect;
 		GetWindowRect(hWnd, &correct_window_rect);
@@ -949,6 +944,20 @@ int render() {
 		float my_heigth = correct_window_rect.bottom - correct_window_rect.top;
 		//SetWindowPos(hWnd, hWnd, correct_window_rect.left - 20, correct_window_rect.top - 50, my_heigth, my_width, SWP_SHOWWINDOW);
 		ChangeClickability(false, /*ohwnd*/hWnd);
+
+		std::string movestring = "<" + std::to_string(999) + "," + std::to_string(999) + ">";
+
+		//Creating a c string
+		char *c_string = new char[movestring.size()];
+		//copying the std::string to c string
+		std::copy(movestring.begin(), movestring.end(), c_string);
+		//Adding the delimiter
+		//c_string[movestring.size()] = '\n';
+		//Writing string to arduino
+		arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+		//freeing c_string memory
+		delete[] c_string;
+		Sleep(100);
 	}
 	ImGui::EndFrame();
 

@@ -6,8 +6,6 @@
 #include "d3d9.h"
 #include "draw.h"
 
-bool aim;
-
 void SendKey() {
 	INPUT input;
 	WORD vkey = VK_LEFT; // see link below
