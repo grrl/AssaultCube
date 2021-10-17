@@ -19,6 +19,8 @@
 #include "vector4.h"
 #include "w2s.h"
 #include "color.h"
+#include "serialport.h"
+
 //#include "aimbot.h"
 
 #include <imgui.h>
@@ -28,6 +30,16 @@
 #include <d3d9.h>
 #pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "d3d9.lib")
+
+//arduino includes
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <cstring>
+#include <cstdio>
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "Advapi32.lib")
 
 HWND hGameWnd;
 
@@ -43,7 +55,79 @@ void entityloop();
 int render();
 float fov = 45;
 
+//arduino
+
+//int id;
+
+//String for getting the output from arduino
+char output[MAX_DATA_LENGTH];
+
+/*Portname must contain these backslashes, and remember to
+replace the following com port*/
+const char *port_name = "\\\\.\\COM3";
+
+SerialPort arduino((char*)port_name);
+
+//String for incoming data
+char incomingData[MAX_DATA_LENGTH];
+
+char *c_string;
+
+
+
 Offsets* offsets = new Offsets();
+
+
+auto get_closest_target_to_crosshair(DWORD dw_local_player) -> DWORD
+{
+	DWORD best_entity = NULL;
+	float lowest_distance = FLT_MAX;
+
+	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
+
+	for (auto i = 1; i < player_count; i++)
+	{
+
+		DWORD entity_list = Kernel::KeReadVirtualMemory<uintptr_t>(Kernel::GameModule + offsets->entity_list);
+
+		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
+
+		if (!entity || entity == 14757395258967641292)
+			continue;
+
+		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
+
+		if (is_dead)
+			continue;
+
+		int local_player_team = Kernel::KeReadVirtualMemory<int>(dw_local_player + offsets->i_team);
+
+		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
+
+		if (local_player_team == entity_team)
+			continue;
+
+		Vector3 v3_entity_head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
+		Vector2 v2_entity_screen = get_entity_screen(v3_entity_head);
+
+		Vector3 center_screen;
+		center_screen.x = clientWidth / 2;
+		center_screen.y = clientHeight / 2;
+
+		float x = v2_entity_screen.x - clientWidth / 2;
+		float y = v2_entity_screen.y - clientHeight / 2;
+		float f_distance = (float)sqrt((x * x) + (y * y));
+
+		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
+
+		if (f_distance < lowest_distance)
+		{
+			lowest_distance = f_distance;
+			best_entity = entity;
+		}
+	}
+	return best_entity;
+}
 
 LRESULT CALLBACK Proc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
@@ -80,6 +164,141 @@ auto Aimbot() -> void
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 	}
 }
+auto arduino_thread() -> void
+{
+	/*
+	char *c_string = new char[255];
+	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
+
+	std::cout << "data is " << c_string << std::endl;
+
+	delete[] c_string;
+	*/
+
+	char *c_string = new char[255];
+	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
+
+	if (c_string == "" || c_string == NULL)
+		return;
+
+	std::cout << "data is " << c_string << std::endl;
+
+	delete[] c_string;
+
+
+	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
+
+	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
+
+	Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(closest_entity + offsets->v3_head_pos);
+
+	head.z += 0.7f;
+
+	Vector2 v2_entity_screen = get_entity_screen(head);
+
+	Vector3 center_screen;
+	center_screen.x = clientWidth / 2;
+	center_screen.y = clientHeight / 2;
+	Vector3 Aimpos;
+	Aimpos.x = v2_entity_screen.x;
+	Aimpos.y = v2_entity_screen.y;
+
+	float radiusx = (fov) * (center_screen.x / 100.0f);
+	float radiusy = (fov) * (center_screen.y / 100.0f);
+
+	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy && GetAsyncKeyState(0x46) && 0x8000)
+	{
+		POINT p;
+		if (GetCursorPos(&p))
+		{
+			int currentx = p.x;
+			int currenty = p.y;
+
+			int ourpointx = 960;
+			int ourpointy = 540;
+
+			if (currentx == ourpointx && currenty == ourpointy)
+				return;
+
+			int moveamountx = 0;
+			int moveamounty = 0;
+			//cursor position now in p.x and p.y
+
+			if (ourpointx > currentx)
+			{
+				if (ourpointx - currentx > 127)
+				{
+					//Console.WriteLine("need -127");
+					moveamountx = 127;
+				}
+				else
+				{
+					//Console.WriteLine("need -x");
+					moveamountx = ourpointx - currentx;
+				}
+			}
+			else if (ourpointx < currentx)
+			{
+				if (currentx - ourpointx > 127)
+				{
+					moveamountx = -127;
+				}
+				else
+				{
+					moveamountx = -1 * (currentx - ourpointx);
+				}
+			}
+
+			if (ourpointy > currenty)
+			{
+				if (ourpointy - currenty > 127)
+				{
+					//Console.WriteLine("need -127 y");
+
+					moveamounty = 127;
+				}
+				else
+				{
+					//Console.WriteLine("need - y");
+
+					moveamounty = ourpointy - currenty;
+				}
+			}
+			else if (ourpointy < currenty)
+			{
+				if (currenty - ourpointy > 127)
+				{
+					moveamounty = -127;
+				}
+				else
+				{
+					moveamounty = -1 * (currenty - ourpointy);
+				}
+			}
+			std::string coords = "<"", 200>";
+			std::string movestring = "<" + std::to_string(moveamountx) + "," + std::to_string(moveamounty) + ">";
+
+			//Creating a c string
+			char *c_string = new char[movestring.size()];
+			//copying the std::string to c string
+			std::copy(movestring.begin(), movestring.end(), c_string);
+			//Adding the delimiter
+			//c_string[movestring.size()] = '\n';
+			//Writing string to arduino
+			arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+			//freeing c_string memory
+			delete[] c_string;
+
+			Sleep(10);
+		}
+
+
+		// wrap in condition
+	}
+
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -88,6 +307,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	freopen("conout$", "w", stdout);
 	freopen("conout$", "w", stderr);
 	printf("Debugging Window:\n");
+
+	if (arduino.isConnected())
+		std::cout << "Connection Established to Serial...\n";
+	else {
+		std::cout << "Error, check your COM serial.\n";
+		system("pause");
+	}
+
+	std::thread thread_render(arduino_thread); // namespace Render
+	thread_render.detach();
+
 
 	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 
@@ -129,41 +359,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DeviceIoControl(Kernel::hKernelDriver, ctl_base, &Input_Output_Data, sizeof Input_Output_Data, &Input_Output_Data, sizeof Input_Output_Data, &Readed_Bytes_Amount, nullptr);
 	Kernel::GameModule = (QWORD)Input_Output_Data.data;
 
-	/*
-	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-
-	while (hGameWnd == NULL)
-	{
-		hGameWnd = FindWindow(0, WINDOWNAME);
-		Sleep(1000);
-	}
-	std::cout << "hwnd: " << hGameWnd << std::endl;
-
-	if (hGameWnd == NULL)
-	{
-		std::cout << "Window %s Not FOUND Exiting......" << std::endl;
-
-		Sleep(1000);
-		exit(0);
-	}
-
-	GetWindowThreadProcessId(hGameWnd, &Kernel::ProcessID);
-
-	if (Kernel::ProcessID == NULL)
-		exit(0);
-
-	std::cout << "processid: " << Kernel::ProcessID << std::endl;
-
-
-	//DumpEXE(GameModule);
-
-	//std::cout << ("ProcessID: ") << Kernel::ProcessID << std::endl;
-	std::cout << ("GameBase: 0x") << std::uppercase << std::hex << Kernel::GameModule << std::endl;
 	std::cout << "GameBase: " << Kernel::GameModule << std::endl;
-	*/
-
-	std::cout << "GameBase: " << Kernel::GameModule << std::endl;
-
 
 	//WNDCLASSEXA OverlayWnd; // contains window class information
 	OverlayWnd.cbSize = sizeof(WNDCLASSEXA); // size of struct, basically checking for version or check
@@ -363,6 +559,111 @@ void AimAtPos(float x, float y)
 	mouse_event(0x0001, TargetX, TargetY, NULL, NULL);
 }
 
+
+void arduino_aimbot(DWORD entity, Vector2 v2_entity_screen) {
+
+	Vector3 center_screen;
+	center_screen.x = clientWidth / 2;
+	center_screen.y = clientHeight / 2;
+	Vector3 Aimpos;
+	Aimpos.x = v2_entity_screen.x;
+	Aimpos.y = v2_entity_screen.y;
+
+	float radiusx = (fov) * (center_screen.x / 100.0f);
+	float radiusy = (fov) * (center_screen.y / 100.0f);
+
+	//std::cout << "aimpos " << Aimpos.x << " " << Aimpos.y << "\n";
+	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy) {
+		std::cout << "working " << Aimpos.x << " " << Aimpos.y << "\n";
+		//if (GetAsyncKeyState(VK_XBUTTON1) & 0x8000)
+		//	AimAtPos(Aimpos.x, Aimpos.y);
+
+		POINT p;
+		if (GetCursorPos(&p))
+		{
+			int currentx = p.x;
+			int currenty = p.y;
+
+			int ourpointx = Aimpos.x;
+			int ourpointy = Aimpos.y;
+
+			if (currentx == ourpointx && currenty == ourpointy)
+				return;
+
+			int moveamountx = 0;
+			int moveamounty = 0;
+			//cursor position now in p.x and p.y
+
+			if (ourpointx > currentx)
+			{
+				if (ourpointx - currentx > 127)
+				{
+					//Console.WriteLine("need -127");
+					moveamountx = 127;
+				}
+				else
+				{
+					//Console.WriteLine("need -x");
+					moveamountx = ourpointx - currentx;
+				}
+			}
+			else if (ourpointx < currentx)
+			{
+				if (currentx - ourpointx > 127)
+				{
+					moveamountx = -127;
+				}
+				else
+				{
+					moveamountx = -1 * (currentx - ourpointx);
+				}
+			}
+
+			if (ourpointy > currenty)
+			{
+				if (ourpointy - currenty > 127)
+				{
+					//Console.WriteLine("need -127 y");
+
+					moveamounty = 127;
+				}
+				else
+				{
+					//Console.WriteLine("need - y");
+
+					moveamounty = ourpointy - currenty;
+				}
+			}
+			else if (ourpointy < currenty)
+			{
+				if (currenty - ourpointy > 127)
+				{
+					moveamounty = -127;
+				}
+				else
+				{
+					moveamounty = -1 * (currenty - ourpointy);
+				}
+			}
+			std::string coords = "<"", 200>";
+			std::string movestring = "<" + std::to_string(moveamountx) + "," + std::to_string(moveamounty) + ">";
+
+			//Creating a c string
+			char *c_string = new char[movestring.size()];
+			//copying the std::string to c string
+			std::copy(movestring.begin(), movestring.end(), c_string);
+			//Adding the delimiter
+			//c_string[movestring.size()] = '\n';
+			//Writing string to arduino
+			arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+			//freeing c_string memory
+			delete[] c_string;
+
+			Sleep(1);
+		}
+	}
+}
+
 void aimbot(DWORD entity, Vector2 v2_entity_screen) {
 
 	Vector3 center_screen;
@@ -385,57 +686,6 @@ void aimbot(DWORD entity, Vector2 v2_entity_screen) {
 
 }
 
-auto get_closest_target_to_crosshair(DWORD dw_local_player) -> DWORD
-{
-	DWORD best_entity = NULL;
-	float lowest_distance = FLT_MAX;
-
-	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
-
-	for (auto i = 1; i < player_count; i++)
-	{
-
-		DWORD entity_list = Kernel::KeReadVirtualMemory<uintptr_t>(Kernel::GameModule + offsets->entity_list);
-
-		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
-
-		if (!entity || entity == 14757395258967641292)
-			continue;
-
-		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
-
-		if (is_dead)
-			continue;
-
-		int local_player_team = Kernel::KeReadVirtualMemory<int>(dw_local_player + offsets->i_team);
-
-		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
-
-		if (local_player_team == entity_team)
-			continue;
-
-		Vector3 v3_entity_head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
-		Vector2 v2_entity_screen = get_entity_screen(v3_entity_head);
-
-		Vector3 center_screen;
-		center_screen.x = clientWidth / 2;
-		center_screen.y = clientHeight / 2;
-
-		float x = v2_entity_screen.x - clientWidth / 2;
-		float y = v2_entity_screen.y - clientHeight / 2;
-		float f_distance = (float)sqrt((x * x) + (y * y));
-
-		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
-
-		if (f_distance < lowest_distance)
-		{
-			lowest_distance = f_distance;
-			best_entity = entity;
-		}
-	}
-	return best_entity;
-}
-
 void entityloop() {
 
 	//int player_count = offsets->get_player_count();
@@ -447,7 +697,7 @@ void entityloop() {
 
 	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
 
-	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
+	//DWORD closest_entity = get_closest_target_to_crosshair(local_player);
 
 	for (auto i = 1; i < player_count; i++) {
 
@@ -500,11 +750,12 @@ void entityloop() {
 		if (w2s_head == Vector2(-1, -1) || w2s_foot == Vector2(-1, -1))
 			continue;
 
+		/*
 		if (entity == closest_entity) {
-
-			aimbot(entity, w2s_head);
+			//aimbot(entity, w2s_head);
+			arduino_aimbot(entity, w2s_head);
 		}
-
+		*/
 		//startcopypaste
 
 		if (entity_team == local_player_team) {
@@ -625,8 +876,11 @@ void entityloop() {
 	}
 
 }
-
 int render() {
+
+	//char *c_string = new char[255];
+
+	//arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
 
 	dx_Device->Clear(0, 0, D3DCLEAR_TARGET, 0, 1.0f, 0);
 	dx_Device->BeginScene();
