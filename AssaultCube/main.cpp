@@ -206,7 +206,7 @@ auto arduino_thread() -> void
 	float radiusx = (fov) * (center_screen.x / 100.0f);
 	float radiusy = (fov) * (center_screen.y / 100.0f);
 
-	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy && GetAsyncKeyState(0x46) && 0x8000)
+	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy && GetAsyncKeyState(VK_INSERT) && 0x8000)
 	{
 		POINT p;
 		if (GetCursorPos(&p))
@@ -315,9 +315,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		system("pause");
 	}
 
-	std::thread thread_render(arduino_thread); // namespace Render
-	thread_render.detach();
-
+	//std::thread thread_render(arduino_thread); // namespace Render
+	//thread_render.detach();
 
 	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 
@@ -697,7 +696,7 @@ void entityloop() {
 
 	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
 
-	//DWORD closest_entity = get_closest_target_to_crosshair(local_player);
+	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
 
 	for (auto i = 1; i < player_count; i++) {
 
@@ -750,12 +749,12 @@ void entityloop() {
 		if (w2s_head == Vector2(-1, -1) || w2s_foot == Vector2(-1, -1))
 			continue;
 
-		/*
+		
 		if (entity == closest_entity) {
 			//aimbot(entity, w2s_head);
 			arduino_aimbot(entity, w2s_head);
 		}
-		*/
+		
 		//startcopypaste
 
 		if (entity_team == local_player_team) {
@@ -878,10 +877,14 @@ void entityloop() {
 }
 int render() {
 
-	//char *c_string = new char[255];
+	char *c_string = new char[255];
+	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
 
-	//arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
+	if (c_string != "" || c_string != NULL) {
+		std::cout << "data is " << c_string << std::endl;
 
+	}
+		
 	dx_Device->Clear(0, 0, D3DCLEAR_TARGET, 0, 1.0f, 0);
 	dx_Device->BeginScene();
 
