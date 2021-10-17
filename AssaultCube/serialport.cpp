@@ -3,6 +3,7 @@
 
 SerialPort::SerialPort(char *portName)
 {
+
 	this->connected = false;
 
 	this->handler = CreateFileA(static_cast<LPCSTR>(portName),

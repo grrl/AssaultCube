@@ -61,8 +61,9 @@ bool aim;
 char output[MAX_DATA_LENGTH];
 
 /*Portname must contain these backslashes, and remember to
-replace the following com port*/
-const char *port_name = "\\\\.\\COM3";
+replace the following com port
+port can be reassigned through Windows Device manager*/
+const char* port_name = "\\\\.\\COM3";
 
 SerialPort arduino((char*)port_name);
 
@@ -384,9 +385,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		std::cout << "Error, check your COM serial.\n";
 		system("pause");
 	}
-
-	//std::thread thread_render(arduino_thread); // namespace Render
-	//thread_render.detach();
 
 	Kernel::hKernelDriver = CreateFileA(("\\\\.\\NEET"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 
@@ -888,6 +886,7 @@ int render() {
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	/*
 	char *c_string = new char[255];
 	arduino.readSerialPort(c_string, MAX_DATA_LENGTH);
 
@@ -895,7 +894,7 @@ int render() {
 		std::cout << "data is " << c_string << std::endl;
 
 	}
-
+	*/
 	if (TargetWnd == GetForegroundWindow())
 	{
 		time_t now = time(0);
@@ -933,6 +932,8 @@ int render() {
 	{
 
 		menu();
+		entityloop();
+		Sleep(1);
 
 	}
 	else if (windowstate != 0 && !show_menu)
