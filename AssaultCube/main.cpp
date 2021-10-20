@@ -538,7 +538,7 @@ void entityloop() {
 			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_foot.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
 			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
