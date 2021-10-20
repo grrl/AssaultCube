@@ -5,6 +5,7 @@
 #include "imgui_impl_win32.h"
 #include "d3d9.h"
 #include "draw.h"
+#include "settings.h"
 
 void SendKey() {
 	INPUT input;
@@ -58,5 +59,42 @@ void ChangeClickability(bool canclick, HWND ownd)
 		SetWindowLong(ownd,
 			GWL_EXSTYLE, style);
 		windowstate = 0;
+	}
+}
+
+const char* items[]{
+	"rage",
+	"semi",
+	"legit"
+};
+static int item_current = 1;
+
+void draw_imgui_menu() {
+
+	// convert now to tm struct for UTC
+//tm *gmtm = gmtime(&now);
+//dt = asctime(gmtm);
+	char stamp[256] = "Foreground 10 10  ";
+	DrawString(stamp, 10, 10, 255, 0, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
+
+
+	ImGui::SetNextWindowSize(ImVec2(200, 200));
+	//ImGui::SetNextWindowPos(ImVec2(200, 200));
+	/*
+	if (ImGui::Begin("dbd", nullptr,
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoCollapse |
+		/*ImGuiWindowFlags_AlwaysAutoResize |*/
+		//ImGuiWindowFlags_NoSavedSettings
+	//))
+	ImGui::Begin("Assault Cube");
+	{
+		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Combo("setting ", &item_current, items, IM_ARRAYSIZE(items), 4);
+		ImGui::Checkbox("Aimb##aim", &aim);
+		ImGui::Checkbox("Aimb##aim", &aim);
+		ImGui::Checkbox("Aimb##aim", &aim);
+
+		ImGui::End();
 	}
 }

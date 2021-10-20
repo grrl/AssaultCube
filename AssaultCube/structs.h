@@ -1,6 +1,5 @@
 #pragma once
 #include "vector3.h"
-#include "fvector.h"
 
 typedef struct _KERNEL_MEMORY
 {
