@@ -81,6 +81,28 @@ void AimAtPos(float x, float y)
 	mouse_event(0x0001, TargetX, TargetY, NULL, NULL);
 }
 
+void aimbot(DWORD entity, Vector2 v2_entity_screen) {
+
+	Vector3 center_screen;
+	center_screen.x = clientWidth / 2;
+	center_screen.y = clientHeight / 2;
+	Vector3 Aimpos;
+	Aimpos.x = v2_entity_screen.x;
+	Aimpos.y = v2_entity_screen.y;
+
+	float radiusx = (fov) * (center_screen.x / 100.0f);
+	float radiusy = (fov) * (center_screen.y / 100.0f);
+
+	//std::cout << "aimpos " << Aimpos.x << " " << Aimpos.y << "\n";
+	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy) {
+		std::cout << "working " << Aimpos.x << " " << Aimpos.y << "\n";
+		if (GetAsyncKeyState(VK_XBUTTON1) & 0x8000)
+			AimAtPos(Aimpos.x, Aimpos.y);
+
+	}
+
+}
+
 ViewMatrix get_view_matrix()
 {
 	return Kernel::KeReadVirtualMemory<ViewMatrix>(Kernel::GameModule + offsets->view_matrix);

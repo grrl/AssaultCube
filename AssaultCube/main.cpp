@@ -423,27 +423,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return 0;
 }
 
-void aimbot(DWORD entity, Vector2 v2_entity_screen) {
-
-	Vector3 center_screen;
-	center_screen.x = clientWidth / 2;
-	center_screen.y = clientHeight / 2;
-	Vector3 Aimpos;
-	Aimpos.x = v2_entity_screen.x;
-	Aimpos.y = v2_entity_screen.y;
-
-	float radiusx = (fov) * (center_screen.x / 100.0f);
-	float radiusy = (fov) * (center_screen.y / 100.0f);
-
-	//std::cout << "aimpos " << Aimpos.x << " " << Aimpos.y << "\n";
-	if (Aimpos.x >= center_screen.x - radiusx && Aimpos.x <= center_screen.x + radiusx && Aimpos.y >= center_screen.y - radiusy && Aimpos.y <= center_screen.y + radiusy) {
-		std::cout << "working " << Aimpos.x << " " << Aimpos.y << "\n";
-		if (GetAsyncKeyState(VK_XBUTTON1) & 0x8000)
-			AimAtPos(Aimpos.x, Aimpos.y);
-
-	}
-
-}
 
 void entityloop() {
 
@@ -495,8 +474,8 @@ void entityloop() {
 
 		std::cout << "entity_team " << entity_team << "\n";
 
-		if (local_player_team == entity_team)
-			continue;
+		//if (local_player_team == entity_team)
+		//	continue;
 
 		Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_head_pos);
 		Vector3 foot = Kernel::KeReadVirtualMemory<Vector3>(entity + offsets->v3_foot_pos);
@@ -657,7 +636,7 @@ void entityloop() {
 
 	Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(best_entity + offsets->v3_head_pos);
 
-	if (head.x == 0 || head.y == 0)
+	if (head.x == 0 && head.y == 0)
 		return;
 
 	Vector2 w2s_head_target = get_entity_screen(head);
