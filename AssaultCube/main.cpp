@@ -423,6 +423,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return 0;
 }
 
+float VectorDistance(Vector3 v1, Vector3 v2)
+{
+	return (float)sqrt(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2) + pow(v1.z - v2.z, 2))* 0.3048/* * 0.0254f*/;
+
+}
 
 void entityloop() {
 
@@ -435,15 +440,18 @@ void entityloop() {
 
 	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
 
+	if (!local_player)
+		return;
+
+	Vector3 local_foot = Kernel::KeReadVirtualMemory<Vector3>(local_player + offsets->v3_foot_pos);
+
+	//Vector3 w2s_local_foot = get_entity_screen(local_foot);
 
 	DWORD best_entity = NULL;
 	float lowest_distance = FLT_MAX;
 	//DWORD closest_entity = get_closest_target_to_crosshair(local_player);
 
 	for (auto i = 1; i < player_count; i++) {
-
-		if (!local_player)
-			continue;
 
 		//std::cout << "local_player " << local_player << "\n";
 
@@ -452,7 +460,6 @@ void entityloop() {
 		//std::cout << "entity_list " << entity_list << "\n";
 
 		DWORD  entity = Kernel::KeReadVirtualMemory<DWORD>(entity_list + 0x4 * i);
-
 
 		if (!entity || entity == 14757395258967641292)
 			continue;
@@ -502,6 +509,8 @@ void entityloop() {
 		float y = w2s_head.y - clientHeight / 2;
 		float f_distance = (float)sqrt((x * x) + (y * y));
 
+		float my_distance = VectorDistance(local_foot, foot);
+
 		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
 		
 		/*
@@ -547,11 +556,11 @@ void entityloop() {
 			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			/*
+			
 			char buffer[5];
 			char buffer2[4];
 			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
-			int ret = snprintf(buffer, sizeof buffer, "%f", Round(dist));
+			int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
 			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
 			//printf("%d\n", dist);
 			char printChar1[2] = "[";
@@ -562,8 +571,8 @@ void entityloop() {
 			strcat(result, buffer); // append string two to the result.
 			strcat(result, printChar2); // append string two to the result.
 			strcat(result, buffer2); // append string two to the result.
-			DrawShadowString(result, entity_transformed.x, entity_transformed.y, 255, 255, 255, dx_FontCalibri);
-			*/
+			DrawShadowString(result, w2s_foot.x, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
+			
 			//write_glow_team(entity);
 		}
 		else {
@@ -611,11 +620,11 @@ void entityloop() {
 			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 
-			/*
+			
 			char buffer[5];
 			char buffer2[4];
 			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
-			int ret = snprintf(buffer, sizeof buffer, "%f", Round(dist));
+			int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
 			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
 			//printf("%d\n", dist);
 			char printChar1[2] = "[";
@@ -626,8 +635,8 @@ void entityloop() {
 			strcat(result, buffer); // append string two to the result.
 			strcat(result, printChar2); // append string two to the result.
 			strcat(result, buffer2); // append string two to the result.
-			DrawShadowString(result, entity_transformed.x, entity_transformed.y, 255, 255, 255, dx_FontCalibri);
-			*/
+			DrawShadowString(result, w2s_foot.x, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
+			
 	
 		}
 		//endcopypaste
@@ -707,7 +716,7 @@ int render() {
 		// convert now to tm struct for UTC
 		//tm *gmtm = gmtime(&now);
 		//dt = asctime(gmtm);
-		char stamp[256] = "Shionji ";
+		char stamp[256] = "rxr 2021/10/22 demoui ";
 		strcat(stamp, dt);
 		DrawString(stamp, 10, 10, 255, 0, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
 
