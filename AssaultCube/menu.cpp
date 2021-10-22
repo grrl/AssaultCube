@@ -85,7 +85,7 @@ void draw_imgui_menu() {
 		/*ImGuiWindowFlags_AlwaysAutoResize |*/
 		//ImGuiWindowFlags_NoSavedSettings
 	//))
-	ImGui::Begin("Assault Cube");
+	ImGui::Begin("rxr menu");
 	{
 		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		ImGui::Checkbox("Arduino aimlock##aim", &aim);
