@@ -1,4 +1,6 @@
 #pragma once
 
-float fov = 45;
-bool aim;
+static int fov = 45;
+static bool aim = true;
+static bool esp = true;
+static int item_current = 1;

@@ -28,6 +28,5 @@ extern float clientHeight, clientWidth;
 extern int windowWidth, windowHeight;
 extern int borderWidth, borderHeight;
 extern int windowstate;
-extern float fov;
 int D3D9Init(HWND hWnd);
 #endif

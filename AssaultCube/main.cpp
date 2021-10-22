@@ -20,6 +20,7 @@
 #include "w2s.h"
 #include "color.h"
 #include "serialport.h"
+#include "settings.h"
 
 #include <imgui.h>
 #include "imgui_impl_dx9.h"
@@ -523,56 +524,58 @@ void entityloop() {
 
 		if (entity_team == local_player_team) {
 
-			int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
+			if (esp) {
 
-			std::cout << "health is " << health << "\n";
+				int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
 
-			float Height = w2s_head.y - w2s_foot.y;
-			float delta = (Height / 100.0f) * health;
+				std::cout << "health is " << health << "\n";
 
-			if (health > 75)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
-			else if (health > 50)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
-			else if (health > 25)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
-			else
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
+				float Height = w2s_head.y - w2s_foot.y;
+				float delta = (Height / 100.0f) * health;
 
-			float rMy = 0.392;
-			float gMy = 0.584;
-			float bMy = 0.930;
-			float aMy = 1;
+				if (health > 75)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
+				else if (health > 50)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
+				else if (health > 25)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
+				else
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
-			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				float rMy = 0.392;
+				float gMy = 0.584;
+				float bMy = 0.930;
+				float aMy = 1;
 
-			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			
-			char buffer[5];
-			char buffer2[4];
-			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
-			int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
-			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
-			//printf("%d\n", dist);
-			char printChar1[2] = "[";
-			char printChar2[4] = "m] ";
-			char result[15];   // array to hold the result.
+				DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rMy * 255, gMy * 255, bMy * 255, aMy * 255);
 
-			strcpy(result, printChar1); // copy string one into the result.
-			strcat(result, buffer); // append string two to the result.
-			strcat(result, printChar2); // append string two to the result.
-			strcat(result, buffer2); // append string two to the result.
-			DrawShadowString(result, w2s_foot.x, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
-			
+
+				char buffer[5];
+				char buffer2[4];
+				//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
+				int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
+				int ret2 = snprintf(buffer2, sizeof buffer2, "%f", (float)health);
+				//printf("%d\n", dist);
+				char printChar1[2] = "[";
+				char printChar2[4] = "m] ";
+				char result[15];   // array to hold the result.
+
+				strcpy(result, printChar1); // copy string one into the result.
+				strcat(result, buffer); // append string two to the result.
+				strcat(result, printChar2); // append string two to the result.
+				strcat(result, buffer2); // append string two to the result.
+				DrawShadowString(result, w2s_foot.x - 10, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
+			}
 			//write_glow_team(entity);
 		}
 		else {
@@ -583,60 +586,63 @@ void entityloop() {
 				best_entity = entity;
 			}
 
-			int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
 
-			std::cout << "health is " << health << "\n";
+			if (esp) {
 
-			float Height = w2s_head.y - w2s_foot.y;
-			float delta = (Height / 100.0f) * health;
+				int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
 
-			if (health > 75)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
-			else if (health > 50)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
-			else if (health > 25)
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
-			else
-				DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
+				std::cout << "health is " << health << "\n";
 
-			float rEn = 1;
-			float gEn = 0;
-			float bEn = 0;
-			float aEn = 1;
+				float Height = w2s_head.y - w2s_foot.y;
+				float delta = (Height / 100.0f) * health;
 
-			//if (dist <= 200.f)
-			//	DrawLine(clientWidth / 2, clientHeight / 2, entity_transformed.x, entityhead_transformed.y, 57, 255, 20, 255);
+				if (health > 75)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 57, 255, 20, 255);
+				else if (health > 50)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 255, 0, 255);
+				else if (health > 25)
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 102, 0, 255);
+				else
+					DrawHealthBar((w2s_foot.x - Height / 4) + 3, w2s_foot.y, 3, delta, 255, 0, 0, 255);
+
+				float rEn = 1;
+				float gEn = 0;
+				float bEn = 0;
+				float aEn = 1;
+
+				//if (dist <= 200.f)
+				//	DrawLine(clientWidth / 2, clientHeight / 2, entity_transformed.x, entityhead_transformed.y, 57, 255, 20, 255);
 
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
-			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 
-			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 4, w2s_head.y - Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 4, w2s_foot.y + Height / 5, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_head.y, w2s_foot.x - Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_head.y, w2s_foot.x + Height / 16, w2s_head.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 
-			DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
-			DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x - Height / 4, w2s_foot.y, w2s_foot.x - Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
+				DrawLine(w2s_foot.x + Height / 4, w2s_foot.y, w2s_foot.x + Height / 16, w2s_foot.y, rEn * 255, gEn * 255, bEn * 255, aEn * 255);
 
-			
-			char buffer[5];
-			char buffer2[4];
-			//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
-			int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
-			int ret2 = snprintf(buffer2, sizeof buffer2, "%f", health);
-			//printf("%d\n", dist);
-			char printChar1[2] = "[";
-			char printChar2[4] = "m] ";
-			char result[15];   // array to hold the result.
 
-			strcpy(result, printChar1); // copy string one into the result.
-			strcat(result, buffer); // append string two to the result.
-			strcat(result, printChar2); // append string two to the result.
-			strcat(result, buffer2); // append string two to the result.
-			DrawShadowString(result, w2s_foot.x, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
-			
+				char buffer[5];
+				char buffer2[4];
+				//double dist2 = dist >= 0. ? floor(dist*100.) / 100. : ceil(dist*100.) / 100.;
+				int ret = snprintf(buffer, sizeof buffer, "%f", my_distance);
+				int ret2 = snprintf(buffer2, sizeof buffer2, "%f", (float)health);
+				//printf("%d\n", dist);
+				char printChar1[2] = "[";
+				char printChar2[4] = "m] ";
+				char result[15];   // array to hold the result.
+
+				strcpy(result, printChar1); // copy string one into the result.
+				strcat(result, buffer); // append string two to the result.
+				strcat(result, printChar2); // append string two to the result.
+				strcat(result, buffer2); // append string two to the result.
+				DrawShadowString(result, w2s_foot.x - 10, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
+			}
 	
 		}
 		//endcopypaste
@@ -651,7 +657,9 @@ void entityloop() {
 	Vector2 w2s_head_target = get_entity_screen(head);
 	if (w2s_head_target == Vector2(-1, -1))
 		return;
-	arduino_aimbot(best_entity, w2s_head_target);
+
+	if (aim)
+		arduino_aimbot(best_entity, w2s_head_target);
 
 
 }
@@ -718,7 +726,7 @@ int render() {
 		//dt = asctime(gmtm);
 		char stamp[256] = "rxr 2021/10/22 demoui ";
 		strcat(stamp, dt);
-		DrawString(stamp, 10, 10, 255, 0, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
+		DrawString(stamp, 10, 10, 255, 255, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
 
 	}
 

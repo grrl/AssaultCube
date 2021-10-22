@@ -63,19 +63,17 @@ void ChangeClickability(bool canclick, HWND ownd)
 }
 
 const char* items[]{
-	"rage",
-	"semi",
-	"legit"
+	"metric",
+	"imperial",
 };
-static int item_current = 1;
 
 void draw_imgui_menu() {
 
 	// convert now to tm struct for UTC
 //tm *gmtm = gmtime(&now);
 //dt = asctime(gmtm);
-	char stamp[256] = "Foreground 10 10  ";
-	DrawString(stamp, 10, 10, 255, 0, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
+	char stamp[256] = "rxr 2021/10/22 menui  ";
+	DrawString(stamp, 10, 10, 255, 255, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
 
 
 	ImGui::SetNextWindowSize(ImVec2(200, 200));
@@ -90,10 +88,12 @@ void draw_imgui_menu() {
 	ImGui::Begin("Assault Cube");
 	{
 		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Arduino aimlock##aim", &aim);
+		ImGui::SliderInt("Fov", &fov, 0, 180);
+		ImGui::Checkbox("ESP##esp", &esp);
 		ImGui::Combo("setting ", &item_current, items, IM_ARRAYSIZE(items), 4);
-		ImGui::Checkbox("Aimb##aim", &aim);
-		ImGui::Checkbox("Aimb##aim", &aim);
-		ImGui::Checkbox("Aimb##aim", &aim);
+		//ImGui::Checkbox("Aimb##aim", &aim);
+		//ImGui::Checkbox("Aimb##aim", &aim);
 
 		ImGui::End();
 	}

@@ -3,6 +3,7 @@
 #include "offsets.h"
 #include "structs.h"
 #include "vector4.h"
+#include "settings.h"
 
 bool smooth = false;
 void AimAtPos(float x, float y)
