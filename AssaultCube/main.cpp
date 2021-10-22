@@ -218,7 +218,6 @@ auto read_arduino() -> void
 		delete[] c_string;
 
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	//Sleep(1);
 	}
 }
 
@@ -341,15 +340,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ImGui_ImplWin32_Init(hWnd);
 	D3D9Init(hWnd);
 
-	//std::thread thread_aimbot(Aimbot);
-	//thread_aimbot.detach();
-	//std::cout << "[THREAD] Aimbot started!" << std::endl;
-
-	//make 2 threads 1 read second loop
-
-	//std::thread thread_send(Misc); // namespace Render
+	//thread for reading arduino
 	std::thread thread_render(read_arduino); // namespace Render
-	//thread_send.join();
+	
 	thread_render.detach();
 
 	for (;;)
