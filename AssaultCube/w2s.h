@@ -137,7 +137,7 @@ auto get_entity_screen(Vector3 v3_world) -> Vector2
 
 	f_matrix = Kernel::KeReadVirtualMemory<ViewMatrix>(Kernel::GameModule + offsets->view_matrix);
 
-	std::cout << "matrix is " << f_matrix.vm0 << " " << f_matrix.vm1 << "\n";
+	//std::cout << "matrix is " << f_matrix.vm0 << " " << f_matrix.vm1 << "\n";
 	/*
 	for (auto i = 0; i < 16; i++) // index is always 16 in 3D games
 	{

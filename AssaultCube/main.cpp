@@ -105,8 +105,8 @@ void arduino_aimbot(DWORD entity, Vector2 v2_entity_screen) {
 	center_screen.x = clientWidth / 2;
 	center_screen.y = clientHeight / 2;
 	Vector3 Aimpos;
-	Aimpos.x = v2_entity_screen.x;
-	Aimpos.y = v2_entity_screen.y;
+	Aimpos.x = v2_entity_screen.x + window_right_extra;
+	Aimpos.y = v2_entity_screen.y + windowtop_extra;
 
 	float radiusx = (fov) * (center_screen.x / 100.0f);
 	float radiusy = (fov) * (center_screen.y / 100.0f);
@@ -198,6 +198,8 @@ void arduino_aimbot(DWORD entity, Vector2 v2_entity_screen) {
 			//freeing c_string memory
 			delete[] c_string;
 
+			Sleep(20);
+
 		}
 	}
 }
@@ -221,6 +223,8 @@ auto read_arduino() -> void
 	}
 }
 
+float windowtop_extra;
+float window_right_extra;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	AllocConsole();
@@ -312,6 +316,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		windowWidth = (WindowRect.right - WindowRect.left);
 		windowHeight = (WindowRect.bottom - WindowRect.top);
 
+
+		windowtop_extra = WindowRect.top;
+		window_right_extra = WindowRect.left;
 		DWORD dwStyle = GetWindowLong(TargetWnd, GWL_STYLE);
 
 		if (dwStyle & WS_BORDER) {
@@ -319,6 +326,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			windowWidth -= 6;
 			windowHeight -= 29;
 		}
+		std::cout << "windowtop extra: " << windowtop_extra << std::endl;
+		std::cout << "windowright extra: " << window_right_extra << std::endl;
+
 		std::cout << "width: " << windowWidth << " " << "height: " << windowHeight << std::endl;
 		pMargin = { 0, 0, windowHeight, windowWidth };
 		hWnd = CreateWindowExA(WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED, lWindowName, lWindowName, WS_POPUP, 1, 1, windowWidth, windowHeight, 0, 0, 0, 0);
@@ -404,6 +414,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			WindowRect.left += borderWidth;
 			WindowRect.top += borderHeight;
+
+			//get arduino values right
+
+			windowtop_extra = WindowRect.top;
+			window_right_extra = WindowRect.left;
+
 		}
 
 		MoveWindow(hWnd, WindowRect.left, WindowRect.top, clientWidth, clientHeight, true);
@@ -430,7 +446,7 @@ void entityloop() {
 
 	int player_count = Kernel::KeReadVirtualMemory<int>(Kernel::GameModule + offsets->player_count);
 
-	std::cout << "playercount " << player_count << "\n";
+	//std::cout << "playercount " << player_count << "\n";
 
 	DWORD local_player = Kernel::KeReadVirtualMemory<DWORD>(Kernel::GameModule + offsets->local_player);
 
@@ -443,7 +459,7 @@ void entityloop() {
 
 	DWORD best_entity = NULL;
 	float lowest_distance = FLT_MAX;
-	//DWORD closest_entity = get_closest_target_to_crosshair(local_player);
+	DWORD closest_entity = get_closest_target_to_crosshair(local_player);
 
 	for (auto i = 1; i < player_count; i++) {
 
@@ -458,22 +474,22 @@ void entityloop() {
 		if (!entity || entity == 14757395258967641292)
 			continue;
 
-		std::cout << "entity success " << entity << "\n";
+		//std::cout << "entity success " << entity << "\n";
 
 		bool is_dead = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_dead);
 
-		std::cout << "is_dead " << is_dead << "\n";
+		//std::cout << "is_dead " << is_dead << "\n";
 
 		if (is_dead)
 			continue;
 
 		int local_player_team = Kernel::KeReadVirtualMemory<int>(local_player + offsets->i_team);
 
-		std::cout << "local_player_team " << local_player_team << "\n";
+		//std::cout << "local_player_team " << local_player_team << "\n";
 
 		int entity_team = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_team);
 
-		std::cout << "entity_team " << entity_team << "\n";
+		//std::cout << "entity_team " << entity_team << "\n";
 
 		//if (local_player_team == entity_team)
 		//	continue;
@@ -489,7 +505,7 @@ void entityloop() {
 
 		Vector2 w2s_foot = get_entity_screen(foot);
 
-		std::cout << "w2s_foot x " << w2s_foot.x << " " << w2s_foot.y <<"\n";
+		//std::cout << "w2s_foot x " << w2s_foot.x << " " << w2s_foot.y <<"\n";
 
 		if (w2s_head == Vector2(-1, -1) || w2s_foot == Vector2(-1, -1))
 			continue;
@@ -506,13 +522,30 @@ void entityloop() {
 		float my_distance = VectorDistance(local_foot, foot);
 
 		//float f_distance = sqrt(pow((GetSystemMetrics(SM_CXSCREEN) / 2) - v2_entity_screen.x, 2) + pow((GetSystemMetrics(SM_CYSCREEN) / 2) - v2_entity_screen.y, 2));
+
 		
-		/*
 		if (entity == closest_entity) {
+
 			//aimbot(entity, w2s_head);
-			arduino_aimbot(entity, w2s_head_withoutz);
+
+			Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(closest_entity + offsets->v3_head_pos);
+
+			if (head.x == 0 && head.y == 0)
+				return;
+
+			Vector2 w2s_head_target = get_entity_screen(head);
+			if (w2s_head_target == Vector2(-1, -1))
+				return;
+
+			//arduino_aimbot(closest_entity, w2s_head_target);
+			if (GetAsyncKeyState(0x46) & 0x8000) {
+				//std::cout << "aimpos " << w2s_head_target.x << " " << w2s_head_target.y << "\n";
+				//AimAtPos((int)w2s_head_target.x, (int)w2s_head_target.y);
+				arduino_aimbot(entity, w2s_head_target);
+			}
+			//arduino_aimbot(entity, w2s_head_target);
 		}
-		*/
+		
 		//startcopypaste
 
 		if (entity_team == local_player_team) {
@@ -521,7 +554,7 @@ void entityloop() {
 
 				int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
 
-				std::cout << "health is " << health << "\n";
+				//std::cout << "health is " << health << "\n";
 
 				float Height = w2s_head.y - w2s_foot.y;
 				float delta = (Height / 100.0f) * health;
@@ -573,18 +606,20 @@ void entityloop() {
 		}
 		else {
 
+
+			/*
 			if (f_distance < lowest_distance)
 			{
 				lowest_distance = f_distance;
 				best_entity = entity;
 			}
-
+			*/
 
 			if (esp) {
 
 				int health = Kernel::KeReadVirtualMemory<int>(entity + offsets->i_health);
 
-				std::cout << "health is " << health << "\n";
+				//std::cout << "health is " << health << "\n";
 
 				float Height = w2s_head.y - w2s_foot.y;
 				float delta = (Height / 100.0f) * health;
@@ -636,13 +671,17 @@ void entityloop() {
 				strcat(result, buffer2); // append string two to the result.
 				DrawShadowString(result, w2s_foot.x - 10, w2s_foot.y, 255, 255, 255, dx_FontCalibri);
 			}
-	
+
 		}
 		//endcopypaste
 	}
 
-
+	/*
+	if (best_entity == NULL)
+		return;
+	
 	Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(best_entity + offsets->v3_head_pos);
+
 
 	if (head.x == 0 && head.y == 0)
 		return;
@@ -651,10 +690,18 @@ void entityloop() {
 	if (w2s_head_target == Vector2(-1, -1))
 		return;
 
-	if (aim)
-		arduino_aimbot(best_entity, w2s_head_target);
+	if (w2s_head_target.x < 0 || w2s_head_target.y < 0 || w2s_head_target.y > clientHeight || w2s_head_target.x > clientWidth)
+		return;
 
-
+	std::cout << "aimpos " << w2s_head_target.x << " " << w2s_head_target.y << "\n";
+	arduino_aimbot(best_entity, w2s_head_target);
+	//AimAtPos((int)803, (int)460);
+	//arduino_aimbot(best_entity, w2s_head_target);
+	//arduino_aimbot(best_entity, w2s_head_target);
+	//
+	*/
+	
+	
 }
 
 void menu() {
@@ -669,9 +716,9 @@ void menu() {
 		//SetWindowPos(hWnd, hWnd, correct_window_rect.left - 20, correct_window_rect.top - 50, my_heigth, my_width, SWP_SHOWWINDOW);
 
 		ChangeClickability(true, hWnd);
-
+		
 		std::string movestring = "<" + std::to_string(137) + "," + std::to_string(137) + ">";
-
+		/*
 		//Creating a c string
 		char *c_string = new char[movestring.size()];
 		//copying the std::string to c string
@@ -679,10 +726,10 @@ void menu() {
 		//Adding the delimiter
 		//c_string[movestring.size()] = '\n';
 		//Writing string to arduino
-		arduino.writeSerialPort(c_string, /*MAX_DATA_LENGTH*/movestring.size());
+		arduino.writeSerialPort(c_string, movestring.size());
 		//freeing c_string memory
 		delete[] c_string;
-
+		*/
 		Sleep(100);
 		//SendKey();
 	}
