@@ -716,9 +716,9 @@ void menu() {
 		//SetWindowPos(hWnd, hWnd, correct_window_rect.left - 20, correct_window_rect.top - 50, my_heigth, my_width, SWP_SHOWWINDOW);
 
 		ChangeClickability(true, hWnd);
-		
-		std::string movestring = "<" + std::to_string(137) + "," + std::to_string(137) + ">";
 		/*
+		std::string movestring = "<" + std::to_string(137) + "," + std::to_string(137) + ">";
+		
 		//Creating a c string
 		char *c_string = new char[movestring.size()];
 		//copying the std::string to c string
