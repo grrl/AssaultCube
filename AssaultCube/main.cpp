@@ -704,10 +704,13 @@ void entityloop() {
 	
 }
 
+
 void menu() {
 
 	if (windowstate != 1) //You might need to remove this check and call it every time to get keyboard input working. Mouse input works anyway.
 	{
+	
+
 		//RECT correct_window_rect;
 		//GetWindowRect(hWnd, &correct_window_rect);
 
