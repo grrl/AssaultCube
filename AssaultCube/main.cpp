@@ -546,8 +546,6 @@ void entityloop() {
 			//arduino_aimbot(entity, w2s_head_target);
 		}
 		
-		//startcopypaste
-
 		if (entity_team == local_player_team) {
 
 			if (esp) {
@@ -673,7 +671,7 @@ void entityloop() {
 			}
 
 		}
-		//endcopypaste
+
 	}
 
 	/*
