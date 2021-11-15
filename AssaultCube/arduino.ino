@@ -20,6 +20,8 @@ boolean newData = false;
 #include <spi4teensy3.h>
 #endif
 #include <SPI.h>
+#include <avr/wdt.h>
+
 
 int Loop = 1;
 
@@ -172,6 +174,11 @@ void showParsedData() {
 	if (integerFromPC == xx && floatFromPC == xx){
 	}
 	else if (integerFromPC == xx && floatFromPC == xx){
+	}
+	else if (integerFromPC == xx && floatFromPC == xx){
+		wdt_enable(WDTO_30MS);
+		  while(1){};
+
 	}
 	else{
 	
