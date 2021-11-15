@@ -37,14 +37,8 @@ void ChangeClickability(bool canclick, HWND ownd)
 		ownd, GWL_EXSTYLE);
 	if (canclick) {
 		style &= ~WS_EX_LAYERED;
-		RECT correct_window_rect;
-		GetWindowRect(hWnd, &correct_window_rect);
-		HWND my_new_hwnd;
-		float my_width = (correct_window_rect.right - correct_window_rect.left) - 7;
-		float my_heigth = (correct_window_rect.bottom - correct_window_rect.top) + 25;
-		//SetWindowPos(hWnd, hWnd, correct_window_rect.left - 7, correct_window_rect.top + 25, my_heigth, my_width, SWP_SHOWWINDOW);
-		//SetWindowPos(ownd, HWND_TOPMOST, correct_window_rect.left - 7, correct_window_rect.top + 25, my_heigth, my_width, SWP_NOSIZE | SWP_NOMOVE);
-		//SetWindowPos(ownd, HWND_NOTOPMOST, correct_window_rect.left - 7, correct_window_rect.top + 25, my_heigth, my_width, SWP_NOSIZE | SWP_NOMOVE);
+
+
 		SetWindowLong(ownd,
 			GWL_EXSTYLE, style);
 
