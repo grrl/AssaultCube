@@ -537,13 +537,8 @@ void entityloop() {
 			if (w2s_head_target == Vector2(-1, -1))
 				return;
 
-			//arduino_aimbot(closest_entity, w2s_head_target);
-			if (GetAsyncKeyState(0x46) & 0x8000) {
-				//std::cout << "aimpos " << w2s_head_target.x << " " << w2s_head_target.y << "\n";
-				//AimAtPos((int)w2s_head_target.x, (int)w2s_head_target.y);
-				arduino_aimbot(entity, w2s_head_target);
-			}
-			//arduino_aimbot(entity, w2s_head_target);
+			arduino_aimbot(entity, w2s_head_target);
+
 		}
 		
 		if (entity_team == local_player_team) {
@@ -770,8 +765,6 @@ int render() {
 		DrawString(stamp, 10, 10, 255, 255, 255, dx_FontCalibri); // Put Main procedure here like ESP etc.
 
 	}
-
-	//w2s.Update();
 
 
 	if (GetAsyncKeyState(VK_INSERT) & 0x8000) {
