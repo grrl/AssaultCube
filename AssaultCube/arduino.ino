@@ -171,13 +171,15 @@ void showParsedData() {
     Serial.print(", ");
     Serial.println(floatFromPC);
 
-	if (integerFromPC == xx && floatFromPC == xx){
+	if (integerFromPC == 999 && floatFromPC == 999){
+	    Mouse.click(MOUSE_RIGHT);
 	}
-	else if (integerFromPC == xx && floatFromPC == xx){
+	else if (integerFromPC == 777 && floatFromPC == 777){
+		Mouse.click();
 	}
-	else if (integerFromPC == xx && floatFromPC == xx){
+	else if (integerFromPC == 666 && floatFromPC == 666){
 		wdt_enable(WDTO_30MS);
-		  while(1){};
+		while(1){};
 
 	}
 	else{
