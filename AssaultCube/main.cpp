@@ -525,11 +525,11 @@ void entityloop() {
 			Vector3 head = Kernel::KeReadVirtualMemory<Vector3>(closest_entity + offsets->v3_head_pos);
 
 			if (head.x == 0 && head.y == 0)
-				return;
+				continue;
 
 			Vector2 w2s_head_target = get_entity_screen(head);
 			if (w2s_head_target == Vector2(-1, -1))
-				return;
+				continue;
 
 			arduino_aimbot(entity, w2s_head_target);
 
